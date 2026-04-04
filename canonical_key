@@ -1,0 +1,54 @@
+from fractions import Fraction
+....: from functools import reduce
+....: import math
+....: 
+....: def lcm(a, b):
+....:     return abs(a * b) // gcd(a, b) if a and b else 0
+....: 
+....: def canonical_representative(p):
+....:     """p = [J2, J4, J6, J10]
+....:     Returns unique primitive integer tuple (a,b,c,d) with weighted gcd 1
+....:     representing the same point in P(2,4,6,10).
+....:     """
+....:     if all(x == 0 for x in p):
+....:         return (0, 0, 0, 0)
+....: 
+....:     # Step 1: exact fractions
+....:     v = [Fraction(x) for x in p]
+....: 
+....:     # Step 2: clear denominators
+....:     den = reduce(lcm, (x.denominator for x in v))
+....:     v = [int(x * den) for x in v]
+....: 
+....:     # Step 3: remove ordinary gcd
+....:     g = reduce(gcd, v)
+....:     v = [x // g for x in v]
+....: 
+....:     # Step 4: remove weighted gcd w.r.t. weights (2,4,6,10)
+....:     weights = [2, 4, 6, 10]
+....: 
+....:     # Find max lambda such that lambda**w_i divides v[i] for all i
+....:     max_lam = 1
+....:     for lam_candidate in range(2, 100):   # practical upper bound
+....:         if all(v[i] % (lam_candidate ** weights[i]) == 0 for i in range(4) if v[i] != 0):
+....:             max_lam = lam_candidate
+....:         else:
+....:             break
+....: 
+....:     # Divide out the weighted powers
+....:     for i in range(4):
+....:         if v[i] != 0:
+....:             v[i] //= max_lam ** weights[i]
+....: 
+....:     # Step 5: final ordinary gcd removal (sometimes needed)
+....:     g = reduce(gcd, v)
+....:     v = [x // g for x in v]
+....: 
+....:     # Step 6: sign normalization
+....:     for i in range(4):
+....:         if v[i] != 0:
+....:             if v[i] < 0:
+....:                 v = [-x for x in v]
+....:             break
+....: 
+....:     return tuple(v)
